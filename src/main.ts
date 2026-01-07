@@ -13,6 +13,10 @@ async function bootstrap() {
     'http://localhost:5173',
     'http://127.0.0.1:8080',
     'http://127.0.0.1:5173',
+    'http://aquecepro.online',
+    'https://aquecepro.online',
+    'http://www.aquecepro.online',
+    'https://www.aquecepro.online',
   ].filter(Boolean);
 
   app.enableCors({
@@ -24,13 +28,17 @@ async function bootstrap() {
         }
       }
       
-      // Em produção, verifica se está na lista permitida
-      if (origin && allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else if (!origin) {
+      // Em produção, verifica se está na lista permitida ou é do domínio aquecepro.online
+      if (!origin) {
         // Permite requisições sem origin (mobile apps, Postman, etc)
         callback(null, true);
+      } else if (
+        allowedOrigins.includes(origin) ||
+        origin.includes('aquecepro.online')
+      ) {
+        callback(null, true);
       } else {
+        console.warn(`CORS bloqueado para origem: ${origin}`);
         callback(new Error('Não permitido pelo CORS'));
       }
     },
