@@ -3,6 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { TypeOrmOptionsFactory, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { join } from 'path';
+import { config } from 'dotenv';
+
+// Carregar variáveis de ambiente do arquivo .env
+// Isso é necessário para quando o TypeORM CLI executa as migrations
+const envPath = process.env.NODE_ENV === 'production' 
+  ? join(process.cwd(), '.env')
+  : join(__dirname, '../../.env');
+
+config({ path: envPath });
 
 @Injectable()
 export class DatabaseConfig implements TypeOrmOptionsFactory {
