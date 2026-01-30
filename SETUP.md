@@ -45,14 +45,14 @@ Você pode criar o primeiro usuário através da API:
 
 ```bash
 # Primeiro, faça login (se já tiver um usuário)
-POST http://localhost:3000/api/auth/login
+POST http://localhost:3020/api/auth/login
 {
   "email": "admin@example.com",
   "password": "senha123"
 }
 
 # Ou crie um usuário diretamente (requer autenticação)
-POST http://localhost:3000/api/users
+POST http://localhost:3020/api/users
 Authorization: Bearer <token>
 {
   "email": "admin@example.com",

@@ -56,7 +56,7 @@ npm run db:setup
 npm run start:dev
 ```
 
-A aplicação estará disponível em `http://localhost:3000`
+A aplicação estará disponível em `http://localhost:3020`
 
 ### Produção
 
@@ -70,7 +70,7 @@ npm run start:prod
 Após iniciar a aplicação, acesse a documentação Swagger em:
 
 ```
-http://localhost:3000/api/docs
+http://localhost:3020/api/docs
 ```
 
 ## 🗄️ Migrations

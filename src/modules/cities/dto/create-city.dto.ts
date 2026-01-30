@@ -24,7 +24,7 @@ export class MonthlyDataDto {
   @ApiProperty({ example: 3.5 })
   @IsNumber()
   @Min(0)
-  @Max(50)
+  @Max(300)
   windSpeed: number;
 }
 
