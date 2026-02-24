@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsEnum, IsNumber, IsOptional, IsObject, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { ProductSegment, ProductStatus } from '../entities/product.entity';
+import { ProductStatus } from '../entities/product.entity';
 
 export class CreateProductDto {
   @ApiProperty({ example: 'AQS-200-BP' })
@@ -18,9 +18,10 @@ export class CreateProductDto {
   @IsNotEmpty()
   proposalDescription: string;
 
-  @ApiProperty({ enum: ProductSegment, example: ProductSegment.RESIDENTIAL })
-  @IsEnum(ProductSegment)
-  segment: ProductSegment;
+  @ApiProperty({ example: 'Residencial' })
+  @IsString()
+  @IsNotEmpty()
+  segment: string;
 
   @ApiProperty({ example: 'Equipamentos' })
   @IsString()

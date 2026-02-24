@@ -4,11 +4,13 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 
-export enum CategorySegment {
-  RESIDENTIAL = 'Residencial',
-  COMMERCIAL = 'Comercial',
+export enum CategoryType {
+  CATEGORIA_1 = 'categoria 1',
+  CATEGORIA_2 = 'categoria 2',
 }
 
 export enum CategoryStatus {
@@ -26,12 +28,23 @@ export class Category {
 
   @Column({
     type: 'enum',
-    enum: CategorySegment,
+    enum: CategoryType,
+    default: CategoryType.CATEGORIA_1,
   })
-  segment: CategorySegment;
+  type: CategoryType;
+
+  @Column()
+  segment: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
+
+  @ManyToOne(() => Category, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'parentId' })
+  parent: Category;
+
+  @Column({ nullable: true })
+  parentId: string;
 
   @Column({
     type: 'enum',

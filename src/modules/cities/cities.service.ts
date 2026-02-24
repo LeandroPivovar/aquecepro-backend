@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import * as xlsx from 'xlsx';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { City } from './entities/city.entity';
-import { CityMonthlyData } from './entities/city-monthly-data.entity';
+import { CityMonthlyData, Month } from './entities/city-monthly-data.entity';
 import { CreateCityDto } from './dto/create-city.dto';
 import { UpdateCityDto } from './dto/update-city.dto';
 import { CityResponseDto } from './dto/city-response.dto';
@@ -14,7 +15,7 @@ export class CitiesService {
     private citiesRepository: Repository<City>,
     @InjectRepository(CityMonthlyData)
     private monthlyDataRepository: Repository<CityMonthlyData>,
-  ) {}
+  ) { }
 
   async create(createCityDto: CreateCityDto): Promise<CityResponseDto> {
     // Verificar se já existe cidade com o mesmo nome
@@ -153,6 +154,94 @@ export class CitiesService {
 
     // Os dados mensais serão removidos automaticamente devido ao cascade
     await this.citiesRepository.remove(city);
+  }
+
+  async importCities(file: Express.Multer.File): Promise<{ message: string, importedCount: number }> {
+    if (!file) {
+      throw new BadRequestException('Nenhum arquivo enviado');
+    }
+
+    const workbook = xlsx.read(file.buffer, { type: 'buffer' });
+    const sheetName = 'DadosClimaticos';
+    const sheet = workbook.Sheets[sheetName];
+
+    if (!sheet) {
+      throw new BadRequestException(`Aba "${sheetName}" não encontrada na planilha`);
+    }
+
+    const rows: any[] = xlsx.utils.sheet_to_json(sheet);
+    const cityDataMap = new Map<string, any[]>();
+
+    const monthMap: Record<string, Month> = {
+      'janeiro': Month.JANUARY,
+      'fevereiro': Month.FEBRUARY,
+      'março': Month.MARCH,
+      'abril': Month.APRIL,
+      'maio': Month.MAY,
+      'junho': Month.JUNE,
+      'julho': Month.JULY,
+      'agosto': Month.AUGUST,
+      'setembro': Month.SEPTEMBER,
+      'outubro': Month.OCTOBER,
+      'novembro': Month.NOVEMBER,
+      'dezembro': Month.DECEMBER,
+    };
+
+    for (const row of rows) {
+      const cityName = row['Cidade'];
+      if (!cityName) continue;
+
+      if (!cityDataMap.has(cityName)) {
+        cityDataMap.set(cityName, []);
+      }
+
+      const monthStr = row['Mês'];
+      const mappedMonth = monthMap[(monthStr || '').toLowerCase().trim()];
+
+      if (!mappedMonth) continue;
+
+      // Ensure valid numbers or default to 0
+      const temperature = parseFloat(row['Temperatura °C']) || 0;
+      const solarRadiation = parseFloat(row['Radiação solar horizontal kWh/m²/d']) || 0;
+      const windSpeed = parseFloat(row['velocidade vento km/h']) || 0;
+      const latitude = parseFloat(row['Latitude °N']) || 0;
+
+      cityDataMap.get(cityName).push({
+        month: mappedMonth,
+        temperature,
+        solarRadiation,
+        windSpeed,
+        latitude,
+      });
+    }
+
+    let importedCount = 0;
+
+    for (const [cityName, monthlyDataRaw] of cityDataMap.entries()) {
+      const existingCity = await this.citiesRepository.findOne({ where: { name: cityName } });
+
+      const cityLatitude = monthlyDataRaw[0]?.latitude || 0;
+      const monthlyData = monthlyDataRaw.map(({ latitude, ...rest }) => rest);
+
+      if (existingCity) {
+        await this.update(existingCity.id, {
+          latitude: cityLatitude !== 0 ? cityLatitude : existingCity.latitude,
+          monthlyData
+        });
+      } else {
+        await this.create({
+          name: cityName,
+          latitude: cityLatitude,
+          monthlyData,
+        });
+      }
+      importedCount++;
+    }
+
+    return {
+      message: `${importedCount} cidades importadas com sucesso!`,
+      importedCount,
+    };
   }
 }
 

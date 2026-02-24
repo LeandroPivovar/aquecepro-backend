@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Product, ProductSegment, ProductStatus } from '../entities/product.entity';
+import { Product, ProductStatus } from '../entities/product.entity';
 
 export class ProductResponseDto {
   @ApiProperty()
@@ -14,8 +14,8 @@ export class ProductResponseDto {
   @ApiProperty()
   proposalDescription: string;
 
-  @ApiProperty({ enum: ProductSegment })
-  segment: ProductSegment;
+  @ApiProperty()
+  segment: string;
 
   @ApiProperty()
   category1: string;

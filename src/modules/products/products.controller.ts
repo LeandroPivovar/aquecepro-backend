@@ -7,7 +7,10 @@ import {
   Param,
   Delete,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -20,7 +23,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Criar um novo produto' })
@@ -28,6 +31,14 @@ export class ProductsController {
   @ApiResponse({ status: 409, description: 'Código do produto já está em uso' })
   create(@Body() createProductDto: CreateProductDto): Promise<ProductResponseDto> {
     return this.productsService.create(createProductDto);
+  }
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Importar produtos via planilha Excel' })
+  @ApiResponse({ status: 201, description: 'Produtos importados com sucesso' })
+  import(@UploadedFile() file: Express.Multer.File): Promise<{ message: string, importedCount: number }> {
+    return this.productsService.importProducts(file);
   }
 
   @Get()

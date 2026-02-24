@@ -6,11 +6,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-export enum ProductSegment {
-  RESIDENTIAL = 'Residencial',
-  COMMERCIAL = 'Comercial',
-}
-
 export enum ProductStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
@@ -30,11 +25,8 @@ export class Product {
   @Column({ name: 'proposal_description' })
   proposalDescription: string;
 
-  @Column({
-    type: 'enum',
-    enum: ProductSegment,
-  })
-  segment: ProductSegment;
+  @Column()
+  segment: string;
 
   @Column({ name: 'category_1' })
   category1: string;

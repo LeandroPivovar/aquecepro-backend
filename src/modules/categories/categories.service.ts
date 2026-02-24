@@ -14,7 +14,7 @@ export class CategoriesService {
     private categoriesRepository: Repository<Category>,
     @InjectRepository(Product)
     private productsRepository: Repository<Product>,
-  ) {}
+  ) { }
 
   async create(createCategoryDto: CreateCategoryDto): Promise<CategoryResponseDto> {
     // Verificar se já existe categoria com o mesmo nome no mesmo segmento
@@ -37,13 +37,21 @@ export class CategoriesService {
     });
 
     const savedCategory = await this.categoriesRepository.save(category);
-    const productsCount = await this.getProductsCount(savedCategory.id);
 
-    return new CategoryResponseDto(savedCategory, productsCount);
+    // Reload to get parent if provided
+    const loadedCategory = await this.categoriesRepository.findOne({
+      where: { id: savedCategory.id },
+      relations: ['parent'],
+    });
+
+    const productsCount = await this.getProductsCount(loadedCategory!.id);
+
+    return new CategoryResponseDto(loadedCategory!, productsCount);
   }
 
   async findAll(): Promise<CategoryResponseDto[]> {
     const categories = await this.categoriesRepository.find({
+      relations: ['parent'],
       order: { createdAt: 'DESC' },
     });
 
@@ -61,6 +69,7 @@ export class CategoriesService {
   async findOne(id: string): Promise<CategoryResponseDto> {
     const category = await this.categoriesRepository.findOne({
       where: { id },
+      relations: ['parent'],
     });
 
     if (!category) {
@@ -96,10 +105,17 @@ export class CategoriesService {
     }
 
     Object.assign(category, updateCategoryDto);
-    const updatedCategory = await this.categoriesRepository.save(category);
+    await this.categoriesRepository.save(category);
+
+    // Reload to get potentially updated parent
+    const loadedCategory = await this.categoriesRepository.findOne({
+      where: { id },
+      relations: ['parent'],
+    });
+
     const productsCount = await this.getProductsCount(id);
 
-    return new CategoryResponseDto(updatedCategory, productsCount);
+    return new CategoryResponseDto(loadedCategory!, productsCount);
   }
 
   async remove(id: string): Promise<void> {

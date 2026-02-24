@@ -7,7 +7,10 @@ import {
   Param,
   Delete,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { CitiesService } from './cities.service';
 import { CreateCityDto } from './dto/create-city.dto';
@@ -20,7 +23,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 @Controller('cities')
 export class CitiesController {
-  constructor(private readonly citiesService: CitiesService) {}
+  constructor(private readonly citiesService: CitiesService) { }
 
   @Post()
   @ApiOperation({ summary: 'Criar uma nova cidade' })
@@ -28,6 +31,15 @@ export class CitiesController {
   @ApiResponse({ status: 409, description: 'Cidade já existe' })
   create(@Body() createCityDto: CreateCityDto): Promise<CityResponseDto> {
     return this.citiesService.create(createCityDto);
+  }
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Importar cidades de uma planilha Excel' })
+  @ApiResponse({ status: 201, description: 'Cidades importadas com sucesso' })
+  @ApiResponse({ status: 400, description: 'Arquivo inválido ou ausente' })
+  async importCities(@UploadedFile() file: Express.Multer.File): Promise<{ message: string, importedCount: number }> {
+    return this.citiesService.importCities(file);
   }
 
   @Get()
