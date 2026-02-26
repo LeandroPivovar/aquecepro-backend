@@ -137,22 +137,27 @@ export class CategoriesService {
   }
 
   private async getProductsCount(categoryId: string): Promise<number> {
-    // Buscar a categoria para obter o nome
-    const category = await this.categoriesRepository.findOne({
-      where: { id: categoryId },
-    });
+    try {
+      // Buscar a categoria para obter o nome
+      const category = await this.categoriesRepository.findOne({
+        where: { id: categoryId },
+      });
 
-    if (!category) {
+      if (!category) {
+        return 0;
+      }
+
+      // Contar produtos que usam esta categoria como category1 ou category2 (por nome)
+      const count = await this.productsRepository
+        .createQueryBuilder('product')
+        .where('product.category1 = :name OR product.category2 = :name', { name: category.name })
+        .getCount();
+
+      return count;
+    } catch (error) {
+      // Retorna 0 se a tabela products não existir ou houver erro de schema
       return 0;
     }
-
-    // Contar produtos que usam esta categoria como category1 ou category2 (por nome)
-    const count = await this.productsRepository
-      .createQueryBuilder('product')
-      .where('product.category1 = :name OR product.category2 = :name', { name: category.name })
-      .getCount();
-
-    return count;
   }
 }
 
