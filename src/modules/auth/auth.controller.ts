@@ -28,6 +28,16 @@ export class AuthController {
   }
 
   @Public()
+  @Get('register')
+  @ApiOperation({ summary: 'Informativo sobre registro' })
+  async registerInfo() {
+    return {
+      message: 'Para registrar um novo usuário, utilize o método POST enviando os dados necessários.',
+      requiredFields: ['name', 'email', 'password'],
+    };
+  }
+
+  @Public()
   @Post('register')
   @ApiOperation({ summary: 'Registrar novo usuário' })
   @ApiResponse({ status: 201, description: 'Usuário registrado com sucesso', type: AuthResponseDto })

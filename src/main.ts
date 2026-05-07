@@ -48,7 +48,16 @@ async function bootstrap() {
   });
 
   // Prefixo global para todas as rotas
-  app.setGlobalPrefix('api');
+  // Em produção, o Nginx já faz o stripping do prefixo /api, então não o usamos aqui
+  if (process.env.NODE_ENV !== 'production') {
+    app.setGlobalPrefix('api');
+  }
+
+  // Middleware para logar todas as requisições (ajuda no debug de 404)
+  app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+  });
 
   // Validação global
   app.useGlobalPipes(
@@ -70,12 +79,13 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  const swaggerPath = process.env.NODE_ENV === 'production' ? 'docs' : 'api/docs';
+  SwaggerModule.setup(swaggerPath, app, document);
 
   const port = process.env.PORT || 3020;
   await app.listen(port);
   console.log(`🚀 Aplicação rodando em: http://localhost:${port}`);
-  console.log(`📚 Documentação Swagger: http://localhost:${port}/api/docs`);
+  console.log(`📚 Documentação Swagger: http://localhost:${port}/${swaggerPath}`);
 }
 
 bootstrap();
